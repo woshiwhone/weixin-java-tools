@@ -14,30 +14,8 @@ import com.github.binarywang.wxpay.bean.coupon.WxPayCouponStockQueryResult;
 import com.github.binarywang.wxpay.bean.notify.WxPayOrderNotifyResult;
 import com.github.binarywang.wxpay.bean.notify.WxPayRefundNotifyResult;
 import com.github.binarywang.wxpay.bean.notify.WxScanPayNotifyResult;
-import com.github.binarywang.wxpay.bean.request.WxPayAuthcode2OpenidRequest;
-import com.github.binarywang.wxpay.bean.request.WxPayDownloadBillRequest;
-import com.github.binarywang.wxpay.bean.request.WxPayDownloadFundFlowRequest;
-import com.github.binarywang.wxpay.bean.request.WxPayMicropayRequest;
-import com.github.binarywang.wxpay.bean.request.WxPayOrderCloseRequest;
-import com.github.binarywang.wxpay.bean.request.WxPayOrderQueryRequest;
-import com.github.binarywang.wxpay.bean.request.WxPayOrderReverseRequest;
-import com.github.binarywang.wxpay.bean.request.WxPayRefundQueryRequest;
-import com.github.binarywang.wxpay.bean.request.WxPayRefundRequest;
-import com.github.binarywang.wxpay.bean.request.WxPayReportRequest;
-import com.github.binarywang.wxpay.bean.request.WxPaySendRedpackRequest;
-import com.github.binarywang.wxpay.bean.request.WxPayShorturlRequest;
-import com.github.binarywang.wxpay.bean.request.WxPayUnifiedOrderRequest;
-import com.github.binarywang.wxpay.bean.result.WxPayBillResult;
-import com.github.binarywang.wxpay.bean.result.WxPayFundFlowResult;
-import com.github.binarywang.wxpay.bean.result.WxPayMicropayResult;
-import com.github.binarywang.wxpay.bean.result.WxPayOrderCloseResult;
-import com.github.binarywang.wxpay.bean.result.WxPayOrderQueryResult;
-import com.github.binarywang.wxpay.bean.result.WxPayOrderReverseResult;
-import com.github.binarywang.wxpay.bean.result.WxPayRedpackQueryResult;
-import com.github.binarywang.wxpay.bean.result.WxPayRefundQueryResult;
-import com.github.binarywang.wxpay.bean.result.WxPayRefundResult;
-import com.github.binarywang.wxpay.bean.result.WxPaySendRedpackResult;
-import com.github.binarywang.wxpay.bean.result.WxPayUnifiedOrderResult;
+import com.github.binarywang.wxpay.bean.request.*;
+import com.github.binarywang.wxpay.bean.result.*;
 import com.github.binarywang.wxpay.config.WxPayConfig;
 import com.github.binarywang.wxpay.exception.WxPayException;
 
@@ -326,6 +304,20 @@ public interface WxPayService {
    * @throws WxPayException the wx pay exception
    */
   WxPayRedpackQueryResult queryRedpack(String mchBillNo) throws WxPayException;
+  /**
+   * <pre>
+   *   查询红包记录.
+   *   用于商户对已发放的红包进行查询红包的具体信息，可支持普通红包和裂变包。
+   *   请求Url：https://api.mch.weixin.qq.com/mmpaymkttransfers/gethbinfo
+   *   是否需要证书：是（证书及使用说明详见商户证书）
+   *   请求方式：POST
+   * </pre>
+   *
+   * @param request 红包查询请求
+   * @return the wx pay redpack query result
+   * @throws WxPayException the wx pay exception
+   */
+  WxPayRedpackQueryResult queryRedpack(WxPayRedpackQueryRequest request) throws WxPayException;
 
   /**
    * <pre>
@@ -387,6 +379,47 @@ public interface WxPayService {
    * @throws WxPayException the wx pay exception
    */
   void report(WxPayReportRequest request) throws WxPayException;
+
+  /**
+   * <pre>
+   * 下载对账单.
+   * 商户可以通过该接口下载历史交易清单。比如掉单、系统错误等导致商户侧和微信侧数据不一致，通过对账单核对后可校正支付状态。
+   * 注意：
+   * 1、微信侧未成功下单的交易不会出现在对账单中。支付成功后撤销的交易会出现在对账单中，跟原支付单订单号一致，bill_type为REVOKED；
+   * 2、微信在次日9点启动生成前一天的对账单，建议商户10点后再获取；
+   * 3、对账单中涉及金额的字段单位为“元”。
+   * 4、对账单接口只能下载三个月以内的账单。
+   * 接口链接：https://api.mch.weixin.qq.com/pay/downloadbill
+   * 详情请见: <a href="https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_6">下载对账单</a>
+   * </pre>
+   *
+   * @param billDate   对账单日期 bill_date 下载对账单的日期，格式：20140603
+   * @param billType   账单类型 bill_type ALL，返回当日所有订单信息，默认值，SUCCESS，返回当日成功支付的订单，REFUND，返回当日退款订单
+   * @param tarType    压缩账单 tar_type 非必传参数，固定值：GZIP，返回格式为.gzip的压缩包账单。不传则默认为数据流形式。
+   * @param deviceInfo 设备号 device_info 非必传参数，终端设备号
+   * @return 对账内容原始字符串
+   * @throws WxPayException the wx pay exception
+   */
+  String downloadRawBill(String billDate, String billType, String tarType, String deviceInfo) throws WxPayException;
+
+  /**
+   * <pre>
+   * 下载对账单（适合于需要自定义子商户号和子商户appid的情形）.
+   * 商户可以通过该接口下载历史交易清单。比如掉单、系统错误等导致商户侧和微信侧数据不一致，通过对账单核对后可校正支付状态。
+   * 注意：
+   * 1、微信侧未成功下单的交易不会出现在对账单中。支付成功后撤销的交易会出现在对账单中，跟原支付单订单号一致，bill_type为REVOKED；
+   * 2、微信在次日9点启动生成前一天的对账单，建议商户10点后再获取；
+   * 3、对账单中涉及金额的字段单位为“元”。
+   * 4、对账单接口只能下载三个月以内的账单。
+   * 接口链接：https://api.mch.weixin.qq.com/pay/downloadbill
+   * 详情请见: <a href="https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_6">下载对账单</a>
+   * </pre>
+   *
+   * @param request 下载对账单请求
+   * @return 对账内容原始字符串
+   * @throws WxPayException the wx pay exception
+   */
+  String downloadRawBill(WxPayDownloadBillRequest request) throws WxPayException;
 
   /**
    * <pre>
@@ -644,4 +677,23 @@ public interface WxPayService {
    * @throws WxPayException the wx pay exception
    */
   String queryComment(Date beginDate, Date endDate, Integer offset, Integer limit) throws WxPayException;
+
+  /**
+   * <pre>
+   * 拉取订单评价数据.
+   * 商户可以通过该接口拉取用户在微信支付交易记录中针对你的支付记录进行的评价内容。商户可结合商户系统逻辑对该内容数据进行存储、分析、展示、客服回访以及其他使用。如商户业务对评价内容有依赖，可主动引导用户进入微信支付交易记录进行评价。
+   * 注意：
+   * 1. 该内容所有权为提供内容的微信用户，商户在使用内容的过程中应遵从用户意愿
+   * 2. 一次最多拉取200条评价数据，可根据时间区间分批次拉取
+   * 3. 接口只能拉取最近三个月以内的评价数据
+   * 接口链接：https://api.mch.weixin.qq.com/billcommentsp/batchquerycomment
+   * 是否需要证书：需要
+   * 文档地址：https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_17&index=10
+   * </pre>
+   *
+   * @param request 查询请求
+   * @return the string
+   * @throws WxPayException the wx pay exception
+   */
+  String queryComment(WxPayQueryCommentRequest request) throws WxPayException;
 }
